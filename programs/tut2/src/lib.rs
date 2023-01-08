@@ -9,21 +9,19 @@ declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
 #[program]
 pub mod tut2 {
-    use anchor_lang::solana_program::{program::invoke, system_instruction, system_program};
-
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>, amount: u64) -> Result<()> {
-        let sender = ctx.accounts.sender.to_account_info();
-        let receiver = ctx.accounts.receiver.to_account_info();
-        let system_program = ctx.accounts.system_program.to_account_info();
+    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
+        let account = &mut ctx.accounts.account;
+        account.res = 0;
 
-        // let ix = system_instruction::transfer(&sender.key(), &receiver.key(), amount);
-        let ix = system_instruction::transfer(&sender.key(), &receiver.key(), amount);
-        invoke(
-            &ix,
-            &[sender, receiver, system_program], // ).unwrap();
-        )?;
+        Ok(())
+    }
+
+    pub fn add(ctx: Context<Add>, a:i32, b:i32) -> Result<()> {
+        let account = &mut ctx.accounts.account;
+        let tmp = a+b;
+        account.res = tmp;
 
         Ok(())
     }
@@ -32,11 +30,33 @@ pub mod tut2 {
 #[derive(Accounts)]
 pub struct Initialize<'info> {
     #[account(mut)]
-    pub sender: Signer<'info>,
+    pub user: Signer<'info>,
 
-    ///CHECK:
-    #[account(mut)]
-    pub receiver: AccountInfo<'info>,
+    #[account(
+        init,
+        signer,
+        payer = user,
+        space = 8 + Answer::MAX_SIZE,
+    )]
+    pub account: Account<'info, Answer>,
 
     pub system_program: Program<'info, System>,
+}
+
+
+#[derive(Accounts)]
+pub struct Add<'info> {
+    #[account(
+        mut,
+        signer,
+    )]
+    pub account: Account<'info, Answer>,
+}
+
+#[account]
+pub struct Answer {
+    pub res: i32,
+}
+impl Answer {
+    pub const MAX_SIZE: usize = std::mem::size_of::<Answer>();
 }
