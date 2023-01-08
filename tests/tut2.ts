@@ -1,6 +1,10 @@
 import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
 import { Tut2 } from "../target/types/tut2";
+import { readFileSync } from 'fs';
+
+
+const log = console.log;
 
 describe("tut2", () => {
   // Configure the client to use the local cluster.
@@ -8,34 +12,42 @@ describe("tut2", () => {
   const provider = anchor.getProvider();
   let myKey = provider.publicKey;
 
+  let fileTxt = readFileSync("./_users/additions.json", { encoding: 'utf-8' });
+  let kepairJson = JSON.parse(fileTxt);
+  let buffers_8 = Uint8Array.from(kepairJson);
+  let account = anchor.web3.Keypair.fromSecretKey(buffers_8);
+
   const program = anchor.workspace.Tut2 as Program<Tut2>;
   const receiver = new anchor.web3.PublicKey("4MMr4CMFuyBmpbK3RvwdxaipMvkUY4Y25pKYgtEuMYjG");
 
-  it("Is initialized!", async () => {
-    // Add your test here.
-    // let res = await program.methods.initialize(new anchor.BN(12))
-    let res = await program.methods.initialize(new anchor.BN(10)).accounts({
-      sender: provider.publicKey,
-      receiver: receiver,
+  it("init account", async () => {
+    let sign = program.methods.initialize().accounts({
+      user: provider.publicKey,
+      account: account.publicKey,
       systemProgram: anchor.web3.SystemProgram.programId,
-      // }).rpc();
-    }).instruction();
+    })
+      .signers([account])
+      .rpc();
 
-    let tx = new anchor.web3.Transaction();
-    tx.add(res);
-    // tx.add(res);
-    // tx.add(res);
+    log("Tx Sign", sign);
+  })
 
-    // let r = await provider.connection.getLatestBlockhash();    
-    // let blockHash = r.blockhash;
+  it('Additions', async () => {
+    let sign = program.methods.add(1, 4).accounts({
+      account: account.publicKey,
+    })
+      .signers([account])
+      .rpc();
 
-    // tx.feePayer = provider.publicKey;
-    // tx.recentBlockhash = blockHash;
-    
-    // let kp1 = anchor.web3.Keypair.generate();
 
-    const sign = await provider.sendAndConfirm(tx);
-    console.log("tx sign: ", sign)
+    log("Tx Sing: ", sign);
+  })
 
-  });
+  it("geting result: ", async () => {
+    let accountDetails = await program.account.answer.fetch(account.publicKey);
+    let sum = accountDetails.res;
+    log("Result: ", sum)
+  })
+
 });
+
