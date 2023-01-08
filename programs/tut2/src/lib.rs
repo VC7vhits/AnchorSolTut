@@ -4,7 +4,7 @@ declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
 
 #[program]
 pub mod tut2 {
-    use anchor_lang::solana_program::{program::invoke, system_instruction, system_program};
+    use anchor_lang::solana_program::{program::invoke, system_instruction};
 
     use super::*;
 
