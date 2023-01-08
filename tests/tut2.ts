@@ -1,6 +1,8 @@
 import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
 import { Tut2 } from "../target/types/tut2";
+import { readFileSync } from 'fs';
+
 
 const log = console.log;
 
@@ -10,81 +12,42 @@ describe("tut2", () => {
   const provider = anchor.getProvider();
   let myKey = provider.publicKey;
 
+  let fileTxt = readFileSync("./_users/additions.json", { encoding: 'utf-8' });
+  let kepairJson = JSON.parse(fileTxt);
+  let buffers_8 = Uint8Array.from(kepairJson);
+  let account = anchor.web3.Keypair.fromSecretKey(buffers_8);
+
   const program = anchor.workspace.Tut2 as Program<Tut2>;
   const receiver = new anchor.web3.PublicKey("4MMr4CMFuyBmpbK3RvwdxaipMvkUY4Y25pKYgtEuMYjG");
 
-  // it("Is initialized!", async () => {
-  //   // Add your test here.
-  //   // let res = await program.methods.initialize(new anchor.BN(12))
-  //   let res = await program.methods.initialize(new anchor.BN(10)).accounts({
-  //     sender: provider.publicKey,
-  //     receiver: receiver,
-  //     systemProgram: anchor.web3.SystemProgram.programId,
-  //     // }).rpc();
-  //   }).instruction();
+  it("init account", async () => {
+    let sign = program.methods.initialize().accounts({
+      user: provider.publicKey,
+      account: account.publicKey,
+      systemProgram: anchor.web3.SystemProgram.programId,
+    })
+      .signers([account])
+      .rpc();
 
-  //   let tx = new anchor.web3.Transaction();
-  //   tx.add(res);
-
-  //   // tx.add(res);
-  //   // tx.add(res);
-
-  //   // let r = await provider.connection.getLatestBlockhash();    
-  //   // let blockHash = r.blockhash;
-
-  //   // tx.feePayer = provider.publicKey;
-  //   // tx.recentBlockhash = blockHash;
-
-  //   // let kp1 = anchor.web3.Keypair.generate();
-
-  //   const sign = await provider.sendAndConfirm(tx);
-  //   console.log("tx sign: ", sign)
-
-  // });
-
-  it("Sol transfer native: ", async () => {
-    let ix = anchor.web3.SystemProgram.transfer(
-      {
-        fromPubkey: provider.publicKey,
-        toPubkey: receiver,
-        lamports: 1
-      });
-      
-      
-    let tx = new anchor.web3.Transaction();
-    tx.add(ix);
-
-    tx.feePayer = provider.publicKey;
-    let r1 = await provider.connection.getLatestBlockhash();
-    let blockHash = r1.blockhash;
-    tx.recentBlockhash = blockHash;
-
-    let sign = await provider.sendAndConfirm(tx);
-
-    log("Tx Sign: ", sign);
-    
-
+    log("Tx Sign", sign);
   })
 
+  it('Additions', async () => {
+    let sign = program.methods.add(1, 4).accounts({
+      account: account.publicKey,
+    })
+      .signers([account])
+      .rpc();
 
 
+    log("Tx Sing: ", sign);
+  })
 
-  // async function getData() {
-  //   let k = new anchor.web3.PublicKey("GPv247pHoMhA6MFdLmzXzA9JdmVgn6g1VvLUS8kn38Ej")
-  //   let a = await provider.connection.getAccountInfo(k);
-
-  //   return a;
-  // }
-
-  // it("async :", async () => {
-  //   log("start");
-  //   let res = await getData();
-  //   log("res: ", res)
-  //   log('end');
-
-  //   // let data = (await res)
-  //   // log("data ", data);
-
-  // })
+  it("geting result: ", async () => {
+    let accountDetails = await program.account.answer.fetch(account.publicKey);
+    let sum = accountDetails.res;
+    log("Result: ", sum)
+  })
 
 });
+

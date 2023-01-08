@@ -15,14 +15,16 @@ pub mod tut2 {
         let account = &mut ctx.accounts.account;
         account.res = 0;
 
+        msg!("Initialization ....");
         Ok(())
     }
 
-    pub fn add(ctx: Context<Add>, a:i32, b:i32) -> Result<()> {
+    pub fn add(ctx: Context<Add>, a: i32, b: i32) -> Result<()> {
         let account = &mut ctx.accounts.account;
-        let tmp = a+b;
+        let tmp = a + b;
         account.res = tmp;
 
+        msg!("Addition ....");
         Ok(())
     }
 }
@@ -43,13 +45,9 @@ pub struct Initialize<'info> {
     pub system_program: Program<'info, System>,
 }
 
-
 #[derive(Accounts)]
 pub struct Add<'info> {
-    #[account(
-        mut,
-        signer,
-    )]
+    #[account(mut, signer)]
     pub account: Account<'info, Answer>,
 }
 
