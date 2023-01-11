@@ -60,24 +60,38 @@ describe("tut2", () => {
 
   //? Sending sol by direct calling system program.
   it("Sol Transafer (Native)", async () => {
-    let res = anchor.web3.SystemProgram.transfer({
+    let ix = anchor.web3.SystemProgram.transfer({
       fromPubkey: provider.publicKey,
       toPubkey: receiver,
       lamports: 2
-    }).rpc();
+    })
 
-    console.log("Tx Res: ", res);
+
     
-//     let tx = new anchor.web3.Transaction();
-//     tx.add(ix);
+    let tx = new anchor.web3.Transaction();
+    
+    tx.add(ix);
 
-//     tx.feePayer = provider.publicKey;
+    tx.feePayer = provider.publicKey;
 
-//     const blockHashResult = await provider.connection.getLatestBlockhash()
-//     tx.recentBlockhash = blockHashResult.blockhash
+    const blockHashResult = await provider.connection.getLatestBlockhash()
+    tx.recentBlockhash = blockHashResult.blockhash
 
-//     let result = await provider.sendAndConfirm(tx);
-//     log("Transaction result: ", result);
+    let result = await provider.sendAndConfirm(tx);
+    log("Transaction result: ", result);
   })
+  
+  it("Native Sol transfer 2 ", async () => {
+     let ix = anchor.web3.SystemProgram.transfer({
+          fromPubkey: mainUser,
+          toPubkey: receiver,
+          lamports: 1,
+      });
+    
+      let tx = new anchor.web3.Transaction().add(ix);
+      let res = await provider.sendAndConfirm(tx);
+      log("transaction : ", res);
+  });
+
 });
 
