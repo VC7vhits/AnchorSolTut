@@ -96,7 +96,10 @@ describe("tut1", () => {
 
   /// Addition on Pda:
   const [pda, _bump] = anchor.web3.PublicKey.findProgramAddressSync(
-    [utf8.encode("123")],
+    [
+      // utf8.encode("123"),
+      provider.publicKey.toBuffer()
+    ],
     program.programId
   );
 
@@ -113,6 +116,7 @@ describe("tut1", () => {
   it("Store addition in pda Account: ", async () => {
     const sign = await program.methods.addInPda(1, 5).accounts({
       account: pda,
+      user: provider.publicKey
     }).rpc();
 
     log("Tx Sign: ", sign);

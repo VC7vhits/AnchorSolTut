@@ -4,7 +4,7 @@ declare_id!("9tQ16Efw5TgKEYnx5qPxULB7kBBsA5jzRKQBNmP3h2bi");
 
 #[program]
 pub mod tut2 {
-    use anchor_lang::solana_program::program::{invoke, invoke_signed};
+    use anchor_lang::solana_program::program::invoke;
 
     use super::*;
 
@@ -89,7 +89,8 @@ pub struct InitPdaAccount<'info>{
 
     #[account(
         init,
-        seeds = ["123".as_ref()],
+        // seeds = ["123".as_ref()],
+        seeds = [user.key().as_ref()],
         bump,
         payer = user,
         space = 8 + Answer::MAX_SIZE,
@@ -120,9 +121,13 @@ pub struct InitAccount<'info> {
 
 #[derive(Accounts)]
 pub struct AddInPda<'info> {
+    #[account()]
+    pub user: Signer<'info>,
+    
     #[account(
         mut, 
-        seeds = ["123".as_ref()],
+        // seeds = ["123".as_ref()],
+        seeds = [user.key().as_ref()],
         bump,    
     )]
     pub account: Account<'info, Answer>,
