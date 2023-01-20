@@ -1,10 +1,10 @@
 use anchor_lang::prelude::*;
 
-declare_id!("9tQ16Efw5TgKEYnx5qPxULB7kBBsA5jzRKQBNmP3h2bi");
+declare_id!("5Bh7cdEJWWkrJ45d1rsJmo25wwFfMsjQY7j5nHvn9Ztb");
 
 #[program]
 pub mod tut2 {
-    use anchor_lang::solana_program::program::invoke;
+    use anchor_lang::solana_program::program::{invoke, invoke_signed};
 
     use super::*;
 
@@ -64,6 +64,47 @@ pub mod tut2 {
         
         Ok(())
     }
+
+
+
+    pub fn airdrop(context: Context<Airdrop>, amount:u64) -> Result<()>{
+        let pda  = context.accounts.pda.to_account_info();
+        let receiver = context.accounts.receiver.to_account_info();
+
+        let airdrop_seed = "ad".as_bytes();
+        let (_pda, bump) = Pubkey::find_program_address(&[airdrop_seed], context.program_id);
+
+        if pda.key() != _pda {
+            msg!("Sended Pda MissMatch");
+            return Ok(())
+        }
+
+        let ix = anchor_lang::solana_program::system_instruction::transfer(&pda.key(), &receiver.key(), amount);
+        
+        let res = invoke_signed(
+            // &anchor_lang::system_program::transfer(ctx, lamports)
+            &ix,
+            &[
+                pda,
+                receiver,
+            ],
+            &[
+                &[
+                    airdrop_seed,
+                    &[bump]
+                ],
+            ]
+        ).unwrap();
+
+        // match res{
+        //     Ok(val) =>{msg!("sol transfer Passed");},
+        //     Err(_)=> {msg!("sol transfer Failed")}
+        // }
+
+        
+        Ok(())
+    }
+
 }
 
 #[derive(Accounts)]
@@ -100,8 +141,6 @@ pub struct InitPdaAccount<'info>{
     pub system_program: Program<'info, System>,
 }
 
-
-
 #[derive(Accounts)]
 pub struct InitAccount<'info> {
     #[account(mut)]
@@ -118,7 +157,6 @@ pub struct InitAccount<'info> {
     pub system_program: Program<'info, System>,
 }
 
-
 #[derive(Accounts)]
 pub struct AddInPda<'info> {
     #[account()]
@@ -131,6 +169,18 @@ pub struct AddInPda<'info> {
         bump,    
     )]
     pub account: Account<'info, Answer>,
+}
+
+
+#[derive(Accounts)]
+pub struct Airdrop<'info>{
+    ///CHECK:
+    #[account(mut)]
+    pub receiver: AccountInfo<'info>,
+
+    ///CHECK:
+    #[account(mut)]
+    pub pda: AccountInfo<'info>,
 }
 
 #[derive(Accounts)]
