@@ -104,6 +104,8 @@ describe("tut1", () => {
   );
 
   it("init Pda Account:", async () => {
+    log("pda: ", pda.toBase58());
+
     let sign = await program.methods.initPdaAccount().accounts({
       account: pda,
       user: provider.publicKey,
@@ -121,6 +123,4 @@ describe("tut1", () => {
 
     log("Tx Sign: ", sign);
   })
-
-
 });
