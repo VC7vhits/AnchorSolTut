@@ -1,6 +1,6 @@
 import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
-import { Tut2 } from "../target/types/tut2";
+import { IDL, Tut2 } from "../target/types/tut2";
 import { readFileSync } from 'fs';
 import { utf8 } from "@project-serum/anchor/dist/cjs/utils/bytes";
 const log = console.log;
@@ -16,13 +16,16 @@ describe("tut1", () => {
 
   const mainUser = provider.publicKey;
 
-  const program = anchor.workspace.Tut1 as Program<Tut2>;
+  const program = anchor.workspace.Tut2 as Program<Tut2>;
+  // const programId = new anchor.web3.PublicKey("DiaL51hpMhAm46z8E8x4Ku8ipeccnJ4ryg5Ki8NahG1r")
+  // const program = new Program(IDL, programId, provider);
 
-  let fileTxt = readFileSync("./_user/additions.json", { encoding: 'utf-8' });
-  let kepairJson = JSON.parse(fileTxt);
-  let buffers_8 = Uint8Array.from(kepairJson);
-  let account = anchor.web3.Keypair.fromSecretKey(buffers_8);
+  // let fileTxt = readFileSync("./_user/additions.json", { encoding: 'utf-8' });
+  // let kepairJson = JSON.parse(fileTxt);
+  // let buffers_8 = Uint8Array.from(kepairJson);
+  // let account = anchor.web3.Keypair.fromSecretKey(buffers_8);
 
+  /*
   ///NOTE: Test for simple to log on blockchain.
   it("Is initialized!", async () => {
     // Add your test here.
@@ -93,6 +96,7 @@ describe("tut1", () => {
     log("data: ", data);
   })
 
+  */
 
   /// Addition on Pda:
   const [pda, _bump] = anchor.web3.PublicKey.findProgramAddressSync(
