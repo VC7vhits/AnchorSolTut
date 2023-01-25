@@ -1,198 +1,89 @@
 use anchor_lang::prelude::*;
+use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer, MintTo};
 
 declare_id!("5Bh7cdEJWWkrJ45d1rsJmo25wwFfMsjQY7j5nHvn9Ztb");
 
 #[program]
 pub mod tut2 {
-    use anchor_lang::solana_program::program::{invoke, invoke_signed};
-
     use super::*;
 
-    pub fn initialize(ctx: Context<Initialize>) -> Result<()> {
-        msg!("Initialized ...");
+    pub fn mint_token1(context: Context<ATokenMnt>, amount: u64) -> Result<()> {
+        let minter = context.accounts.minter.to_account_info();
+        let mint = context.accounts.mint.to_account_info();
+        let ata = context.accounts.ata.to_account_info();
+        let token_program = context.accounts.token_program.to_account_info();
+
+        let cpi_accounts =  MintTo{
+            mint: mint,
+            to: ata,
+            authority: minter,
+        };
+
+        let cpi_context = CpiContext::new(token_program, cpi_accounts);
+
+        token::mint_to(cpi_context, amount)?;
 
         Ok(())
     }
 
-    pub fn init_pda_account(ctx: Context<InitPdaAccount>) -> Result<()>{
+    pub fn token_transfer1(context: Context<ATokenTransfer>, amount: u64) -> Result<()> {
+        let sender = context.accounts.sender.to_account_info();
+        let sender_ata = context.accounts.sender_ata.to_account_info();
+        let receiver_ata = context.accounts.receiver_ata.to_account_info();
+        let token_program = context.accounts.token_token.to_account_info();
+
+        let cpi_accounts = Transfer {
+            from: sender_ata,
+            to: receiver_ata,
+            authority: sender,
+        };
+
+        let cpi_ctx = CpiContext::new(token_program, cpi_accounts);
+        token::transfer(cpi_ctx, amount).unwrap();
 
         Ok(())
     }
-
-    pub fn sol_transfer(ctx: Context<ASolTransfer>, amount: u64) -> Result<()> {
-        let sender = ctx.accounts.sender.to_account_info();
-        let receiver = ctx.accounts.receiver.to_account_info();
-        let system_program = ctx.accounts.system_program.to_account_info();
-
-        // let ix = system_instruction::transfer(&sender.key(), &receiver.key(), amount);
-        let ix = anchor_lang::solana_program::system_instruction::transfer(
-            &sender.key(),
-            &receiver.key(),
-            amount,
-        );
-
-        invoke(
-            &ix,
-            &[sender, receiver, system_program], // ).unwrap();
-        )?;
-
-        msg!("Sol tranfered : {}", amount as f64 / 1000_000_000.0);
-
-        Ok(())
-    }
-
-    pub fn init_account(ctx: Context<InitAccount>) -> Result<()> {
-        msg!("Account is initialized ....");
-        Ok(())
-    }
-
-    pub fn add(ctx: Context<Add>, a: i32, b: i32) -> Result<()> {
-        let account = &mut ctx.accounts.account;
-        let tmp = a + b;
-        account.res = tmp;
-
-        msg!("Addition ....");
-        Ok(())
-    }
-
-    pub fn add_in_pda(ctx: Context<AddInPda>, a:i32, b:i32) -> Result<()>{
-        let account = &mut ctx.accounts.account;
-        let tmp = a + b;
-        account.res = tmp;
-
-        msg!("Addition ....");
-        
-        Ok(())
-    }
-
-
-
-    pub fn airdrop(context: Context<Airdrop>, amount:u64) -> Result<()>{
-        let pda  = context.accounts.pda.to_account_info();
-        let receiver = context.accounts.receiver.to_account_info();
-
-        let airdrop_seed = "ad".as_bytes();
-        let (_pda, bump) = Pubkey::find_program_address(&[airdrop_seed], context.program_id);
-
-        if pda.key() != _pda {
-            msg!("Sended Pda MissMatch");
-            return Ok(())
-        }
-
-        let ix = anchor_lang::solana_program::system_instruction::transfer(&pda.key(), &receiver.key(), amount);
-        
-        let res = invoke_signed(
-            // &anchor_lang::system_program::transfer(ctx, lamports)
-            &ix,
-            &[
-                pda,
-                receiver,
-            ],
-            &[
-                &[
-                    airdrop_seed,
-                    &[bump]
-                ],
-            ]
-        ).unwrap();
-
-        // match res{
-        //     Ok(val) =>{msg!("sol transfer Passed");},
-        //     Err(_)=> {msg!("sol transfer Failed")}
-        // }
-
-        
-        Ok(())
-    }
-
 }
 
 #[derive(Accounts)]
-pub struct Initialize {}
+pub struct ATokenMnt<'info> {
+    #[account()]
+    pub minter: Signer<'info>,
+
+    #[account(
+        mut,
+        mint::authority = minter,
+    )]
+    pub mint: Account<'info, Mint>,
+
+    #[account(mut)]
+    pub ata: Account<'info, TokenAccount>,
+
+    pub token_program: Program<'info, Token>,
+}
 
 #[derive(Accounts)]
-pub struct ASolTransfer<'info> {
-    #[account(mut)]
+pub struct ATokenTransfer<'info> {
+    #[account()]
     pub sender: Signer<'info>,
 
-    ///CHECK:
-    #[account(mut)]
-    pub receiver: AccountInfo<'info>,
-
-    pub system_program: Program<'info, System>,
-}
-
-
-#[derive(Accounts)]
-pub struct InitPdaAccount<'info>{
-    #[account(mut)]
-    pub user: Signer<'info>,
+    #[account(
+        // mint::authority = sender
+    )]
+    pub mint: Account<'info, Mint>,
 
     #[account(
-        init,
-        // seeds = ["123".as_ref()],
-        seeds = [user.key().as_ref()],
-        bump,
-        payer = user,
-        space = 8 + Answer::MAX_SIZE,
+        mut,
+        token::authority = sender,
+        token::mint = mint,
     )]
-    pub account: Account<'info, Answer>,
-
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct InitAccount<'info> {
-    #[account(mut)]
-    pub user: Signer<'info>,
+    pub sender_ata: Account<'info, TokenAccount>,
 
     #[account(
-        init,
-        signer,
-        payer = user,
-        space = 8 + Answer::MAX_SIZE,
+        mut,
+        token::mint = mint,
     )]
-    pub account: Account<'info, Answer>,
+    pub receiver_ata: Account<'info, TokenAccount>,
 
-    pub system_program: Program<'info, System>,
-}
-
-#[derive(Accounts)]
-pub struct AddInPda<'info> {
-    #[account()]
-    pub user: Signer<'info>,
-    
-    #[account(
-        mut, 
-        // seeds = ["123".as_ref()],
-        seeds = [user.key().as_ref()],
-        bump,    
-    )]
-    pub account: Account<'info, Answer>,
-}
-
-
-#[derive(Accounts)]
-pub struct Airdrop<'info>{
-    ///CHECK:
-    #[account(mut)]
-    pub receiver: AccountInfo<'info>,
-
-    ///CHECK:
-    #[account(mut)]
-    pub pda: AccountInfo<'info>,
-}
-
-#[derive(Accounts)]
-pub struct Add<'info> {
-    #[account(mut, signer)]
-    pub account: Account<'info, Answer>,
-}
-
-#[account]
-pub struct Answer {
-    pub res: i32,
-}
-impl Answer {
-    pub const MAX_SIZE: usize = std::mem::size_of::<Answer>();
+    pub token_token: Program<'info, Token>,
 }
