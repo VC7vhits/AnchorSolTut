@@ -7,6 +7,7 @@ import {
   createAssociatedTokenAccountInstruction,
   TOKEN_PROGRAM_ID,
   getAssociatedTokenAddressSync,
+  createTransferInstruction,
 } from '@solana/spl-token';
 const log = console.log;
 
@@ -45,6 +46,34 @@ describe("tut1", () => {
     return ata;
   }
 
+  async function sendTransaction(keyPairs: anchor.web3.Keypair[] = []) {
+    let tx = new anchor.web3.Transaction();
+    tx.add(...txis);
+    txis = [];
+
+    for (let i of keyPairs) tx.sign(i);
+
+    const res = await provider.sendAndConfirm(tx);
+    log("res: ", res);
+  }
+
+  // it("Deposit in pda: ", async () => {
+  //   const pda = anchor.web3.PublicKey.findProgramAddressSync([
+  //     utf8.encode("seed")
+  //   ], _program.programId)[0];
+
+  //   const pdaAta = await getOrCreateTokenAccount(mint, pda, true);
+  //   const senderAta = await getOrCreateTokenAccount(mint, provider.publicKey);
+
+  //   log("pdaAta: ", pdaAta.toBase58())
+  //   log("senderAta: ", senderAta.toBase58())
+
+  //   let ix = createTransferInstruction(senderAta, pdaAta, provider.publicKey, 500 * 1_000);
+  //   txis.push(ix);
+
+  //   await sendTransaction();
+  // })
+
   it("Airdrop from pda Account: ", async () => {
     const pda = anchor.web3.PublicKey.findProgramAddressSync([
       utf8.encode("seed")
@@ -55,7 +84,7 @@ describe("tut1", () => {
 
     log("pdaAta: ", pdaAta.toBase58())
 
-    let ix = await _program.methods.tokenAirdropFromPda(new anchor.BN(0)).accounts({
+    let ix = await _program.methods.tokenAirdropFromPda(new anchor.BN(3 * 1_000)).accounts({
       mint: mint,
       pda: pda,
       pdaAta: pdaAta,
