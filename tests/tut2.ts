@@ -57,22 +57,22 @@ describe("tut1", () => {
     log("res: ", res);
   }
 
-  // it("Deposit in pda: ", async () => {
-  //   const pda = anchor.web3.PublicKey.findProgramAddressSync([
-  //     utf8.encode("seed")
-  //   ], _program.programId)[0];
+  it("Deposit in pda: ", async () => {
+    const pda = anchor.web3.PublicKey.findProgramAddressSync([
+      utf8.encode("seed")
+    ], _program.programId)[0];
 
-  //   const pdaAta = await getOrCreateTokenAccount(mint, pda, true);
-  //   const senderAta = await getOrCreateTokenAccount(mint, provider.publicKey);
+    const pdaAta = await getOrCreateTokenAccount(mint, pda, true);
+    const senderAta = await getOrCreateTokenAccount(mint, provider.publicKey);
 
-  //   log("pdaAta: ", pdaAta.toBase58())
-  //   log("senderAta: ", senderAta.toBase58())
+    log("pdaAta: ", pdaAta.toBase58())
+    log("senderAta: ", senderAta.toBase58())
 
-  //   let ix = createTransferInstruction(senderAta, pdaAta, provider.publicKey, 500 * 1_000);
-  //   txis.push(ix);
+    let ix = createTransferInstruction(senderAta, pdaAta, provider.publicKey, 500 * 1_000);
+    txis.push(ix);
 
-  //   await sendTransaction();
-  // })
+    await sendTransaction();
+  })
 
   it("Airdrop from pda Account: ", async () => {
     const pda = anchor.web3.PublicKey.findProgramAddressSync([
