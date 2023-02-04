@@ -7,20 +7,40 @@ declare_id!("5Bh7cdEJWWkrJ45d1rsJmo25wwFfMsjQY7j5nHvn9Ztb");
 pub mod tut2 {
     use super::*;
 
-    pub fn token_airdrop_from_pda(
-        context: Context<ATokenAirdropFromPda>,
-        amount: u64,
-    ) -> Result<()> {
+    pub fn buy_token(context: Context<ABuyToken>, amount: u64) -> Result<()> {
         let pda = context.accounts.pda.to_account_info();
         let pda_ata = context.accounts.pda_ata.to_account_info();
-        let receiver_ata = context.accounts.receiver_ata.to_account_info();
-        let token_program = context.accounts.token_token.to_account_info();
+        let buyer = context.accounts.buyer.to_account_info();
+        let buyer_ata = context.accounts.buyer_ata.to_account_info();
+        let token_program = context.accounts.token_program.to_account_info();
+        let sol_collector = context.accounts.sol_collector.to_account_info();
+        let system_program = context.accounts.system_program.to_account_info();
 
         let (_pda, bump) = Pubkey::find_program_address(&[b"seed"], context.program_id);
 
+        //? Taking Sol:
+        let amount_float = (amount as f64) / 1_000 as f64;
+        let sol_price = (1000_000_000 as f64 * amount_float) as u64 / 1000;
+
+        let ix = anchor_lang::solana_program::system_instruction::transfer(
+            &buyer.key(),
+            &sol_collector.key(),
+            sol_price,
+        );
+
+        anchor_lang::solana_program::program::invoke(
+            &ix,
+            &[
+                buyer.to_account_info(),
+                sol_collector.to_account_info(),
+                system_program.to_account_info(),
+            ],
+        )?;
+
+        //? Sending the Token:
         let cpi_accounts = Transfer {
             from: pda_ata,
-            to: receiver_ata,
+            to: buyer_ata,
             authority: pda,
         };
 
@@ -35,7 +55,7 @@ pub mod tut2 {
 }
 
 #[derive(Accounts)]
-pub struct ATokenAirdropFromPda<'info> {
+pub struct ABuyToken<'info> {
     ///CHECK:
     #[account(
         seeds = [b"seed"],
@@ -43,9 +63,7 @@ pub struct ATokenAirdropFromPda<'info> {
     )]
     pub pda: AccountInfo<'info>,
 
-    #[account(
-        // mint::authority = sender
-    )]
+    #[account()]
     pub mint: Account<'info, Mint>,
 
     #[account(
@@ -55,11 +73,20 @@ pub struct ATokenAirdropFromPda<'info> {
     )]
     pub pda_ata: Account<'info, TokenAccount>,
 
+    #[account(mut)]
+    pub buyer: Signer<'info>,
+
+    ///CHECK:
+    #[account(mut)]
+    pub sol_collector: AccountInfo<'info>,
+
     #[account(
         mut,
         token::mint = mint,
     )]
-    pub receiver_ata: Account<'info, TokenAccount>,
+    pub buyer_ata: Account<'info, TokenAccount>,
 
-    pub token_token: Program<'info, Token>,
+    pub token_program: Program<'info, Token>,
+
+    pub system_program: Program<'info, System>,
 }

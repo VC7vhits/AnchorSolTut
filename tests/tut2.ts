@@ -17,7 +17,7 @@ describe("tut1", () => {
   const provider = anchor.getProvider();
   const signer = provider.publicKey;
   const connection = provider.connection;
-  const receiver = new anchor.web3.PublicKey(
+  const buyer = new anchor.web3.PublicKey(
     "8K4Zorrw9kBLMqVEmrABdsjWCSKrcrVvMdJ8CTtyCf2z"
   );
   const mint = new anchor.web3.PublicKey("8BvrrBRZhEst73FbRZRdu1PvKjvL6zvGX3GPVQ3mnhoK")
@@ -74,22 +74,27 @@ describe("tut1", () => {
   //   await sendTransaction();
   // })
 
-  it("Airdrop from pda Account: ", async () => {
+  it("byer from pda Account: ", async () => {
     const pda = anchor.web3.PublicKey.findProgramAddressSync([
       utf8.encode("seed")
     ], _program.programId)[0];
 
     const pdaAta = await getOrCreateTokenAccount(mint, pda, true);
-    const receiverAta = await getOrCreateTokenAccount(mint, provider.publicKey);
+    const buyerAta = await getOrCreateTokenAccount(mint, provider.publicKey);
+    // const solCollector = new anchor.web3.PublicKey("7D6StyJSfQJ2d28weVscUn4frrsi9VLeQDCi8uvRtx63");
+    const solCollector = provider.publicKey
 
     log("pdaAta: ", pdaAta.toBase58())
 
-    let ix = await _program.methods.tokenAirdropFromPda(new anchor.BN(3 * 1_000)).accounts({
+    let ix = await _program.methods.buyToken(new anchor.BN(3 * 1_000)).accounts({
       mint: mint,
       pda: pda,
       pdaAta: pdaAta,
-      receiverAta: receiverAta,
-      tokenToken: TOKEN_PROGRAM_ID,
+      buyerAta: buyerAta,
+      systemProgram: anchor.web3.SystemProgram.programId,
+      tokenProgram: TOKEN_PROGRAM_ID,
+      solCollector: solCollector,
+      buyer: provider.publicKey
     }).instruction()
 
     txis.push(ix);
