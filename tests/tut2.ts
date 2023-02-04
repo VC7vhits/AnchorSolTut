@@ -23,7 +23,7 @@ describe("tut1", () => {
 
   const mainUser = provider.publicKey;
 
-  const program = anchor.workspace.Tut1 as Program<Tut2>;
+  // const program = anchor.workspace.Tut2 as Program<Tut2>;
   let txis = [];
 
   const pid = new anchor.web3.PublicKey("5Bh7cdEJWWkrJ45d1rsJmo25wwFfMsjQY7j5nHvn9Ztb")
@@ -45,30 +45,32 @@ describe("tut1", () => {
     return ata;
   }
 
-  /*
-  it("Token Transfer : ", async () => {
-    const receiverAta = await getOrCreateTokenAccount(mint, receiver);
-    const senderAta = await getOrCreateTokenAccount(mint, signer);
+  it("Airdrop from pda Account: ", async () => {
+    const pda = anchor.web3.PublicKey.findProgramAddressSync([
+      utf8.encode("seed")
+    ], _program.programId)[0];
 
-    const ix = await _program.methods.tokenTransfer1(new anchor.BN(1000)).accounts({
+    const pdaAta = await getOrCreateTokenAccount(mint, pda, true);
+    const receiverAta = await getOrCreateTokenAccount(mint, provider.publicKey);
+
+    log("pdaAta: ", pdaAta.toBase58())
+
+    let ix = await _program.methods.tokenAirdropFromPda(new anchor.BN(0)).accounts({
       mint: mint,
+      pda: pda,
+      pdaAta: pdaAta,
       receiverAta: receiverAta,
-      sender: signer,
-      senderAta: senderAta,
       tokenToken: TOKEN_PROGRAM_ID,
-    }).instruction();
+    }).instruction()
 
     txis.push(ix);
 
-    let tx = new anchor.web3.Transaction();
+    const tx = new anchor.web3.Transaction();
     tx.add(...txis);
 
-    let res = await provider.sendAndConfirm(tx);
-    log("Tx res: ", res);
+    const res = await provider.sendAndConfirm(tx);
+    log("res: ", res);
   })
-  */
 
-  
-  
 
 });
