@@ -73,7 +73,7 @@ describe("tut1", () => {
   //   let _solReceiver = res.owner;
   //   log("solReceiver: ", _solReceiver.toBase58())
   // })
-  
+
 
   // it("Deposit in pda: ", async () => {
   //   const pda = anchor.web3.PublicKey.findProgramAddressSync([
