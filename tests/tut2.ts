@@ -29,9 +29,10 @@ describe("tut1", () => {
 
   const pid = new anchor.web3.PublicKey("5Bh7cdEJWWkrJ45d1rsJmo25wwFfMsjQY7j5nHvn9Ztb")
   const _program = new Program(IDL, pid, provider);
-
-
-
+  const pda = anchor.web3.PublicKey.findProgramAddressSync([
+    utf8.encode("seed")
+  ], _program.programId)[0];
+  const solCollector = new anchor.web3.PublicKey("7D6StyJSfQJ2d28weVscUn4frrsi9VLeQDCi8uvRtx63");
 
   async function getOrCreateTokenAccount(mint: anchor.web3.PublicKey, owner: anchor.web3.PublicKey, offCurve = false) {
     const ata = getAssociatedTokenAddressSync(mint, owner, offCurve);
@@ -57,6 +58,23 @@ describe("tut1", () => {
     log("res: ", res);
   }
 
+  // it("init pda", async () => {
+  //   let res = await _program.methods.initPda(solCollector).accounts({
+  //     owner: provider.publicKey,
+  //     pda: pda,
+  //     systemProgram: anchor.web3.SystemProgram.programId,
+  //   }).rpc();
+
+  //   log("res: ", res);
+  // })
+
+  // it("pda info fetching: ", async () => {
+  //   let res = await _program.account.pdaInfo.fetch(pda);
+  //   let _solReceiver = res.owner;
+  //   log("solReceiver: ", _solReceiver.toBase58())
+  // })
+  
+
   // it("Deposit in pda: ", async () => {
   //   const pda = anchor.web3.PublicKey.findProgramAddressSync([
   //     utf8.encode("seed")
@@ -75,14 +93,8 @@ describe("tut1", () => {
   // })
 
   it("byer from pda Account: ", async () => {
-    const pda = anchor.web3.PublicKey.findProgramAddressSync([
-      utf8.encode("seed")
-    ], _program.programId)[0];
-
     const pdaAta = await getOrCreateTokenAccount(mint, pda, true);
     const buyerAta = await getOrCreateTokenAccount(mint, provider.publicKey);
-    // const solCollector = new anchor.web3.PublicKey("7D6StyJSfQJ2d28weVscUn4frrsi9VLeQDCi8uvRtx63");
-    const solCollector = provider.publicKey
 
     log("pdaAta: ", pdaAta.toBase58())
 
@@ -90,11 +102,12 @@ describe("tut1", () => {
       mint: mint,
       pda: pda,
       pdaAta: pdaAta,
+      buyer: provider.publicKey,
       buyerAta: buyerAta,
       systemProgram: anchor.web3.SystemProgram.programId,
       tokenProgram: TOKEN_PROGRAM_ID,
-      solCollector: solCollector,
-      buyer: provider.publicKey
+      // solCollector: solCollector,
+      solCollector: provider.publicKey,
     }).instruction()
 
     txis.push(ix);
@@ -106,5 +119,17 @@ describe("tut1", () => {
     log("res: ", res);
   })
 
+  // it("Claiming the sol from the Pda:", async () => {
+  //   // let res = await _program.methods.claimFromPda().accounts({
+  //   //   pda: pda,
+  //   //   receiver: solCollector,
+  //   //   // receiver: provider.publicKey,
+  //   //   systemProgram: anchor.web3.SystemProgram.programId,
+  //   // }).rpc();
+
+  //   // log("Res: ", res);
+
+  //   log("pda: ", pda.toBase58());
+  // })
 
 });
