@@ -1,7 +1,12 @@
 use anchor_lang::prelude::*;
-use anchor_lang::system_program::Transfer as SolanaTransfer;
 use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
 declare_id!("5Bh7cdEJWWkrJ45d1rsJmo25wwFfMsjQY7j5nHvn9Ztb");
+
+#[error_code]
+pub enum MyError{
+    #[msg("Sol Receiver MissMatch")]
+    SRMM,
+}
 
 #[program]
 pub mod tut2 {
@@ -9,10 +14,20 @@ pub mod tut2 {
 
     pub fn init_pda(context: Context<InitPda>, sol_receiver: Pubkey) -> Result<()> {
         let pda = &mut context.accounts.pda;
-        pda.owner = sol_receiver;
+        let owner = context.accounts.owner.key();
+        pda.owner = owner;
+        pda.sol_receiver = sol_receiver;
         
         Ok(())
     }
+
+    pub fn change_sol_receiver(context:Context<UpdatePda>, sol_receiver: Pubkey) -> Result<()>{
+        let pda = &mut context.accounts.pda;
+        pda.sol_receiver = sol_receiver;
+        
+        Ok(())
+    }
+    
     
     pub fn buy_token(context: Context<ABuyToken>, amount: u64) -> Result<()> {
         let pda = context.accounts.pda.to_account_info();
@@ -23,12 +38,13 @@ pub mod tut2 {
         let sol_collector = context.accounts.sol_collector.to_account_info();
         let system_program = context.accounts.system_program.to_account_info();
 
-        if context.accounts.pda.owner != sol_collector.key(){
-            msg!("MissMatch the sol Receiver");
-            return Ok(())
+        if context.accounts.pda.sol_receiver != sol_collector.key(){
+            // msg!("MissMatch the sol Receiver");
+            // return Ok(())
+            return anchor_lang::err!(MyError::SRMM);
         }
 
-        let (_pda, bump) = Pubkey::find_program_address(&[b"seed"], context.program_id);
+        let (_pda, bump) = Pubkey::find_program_address(&[b"_seed"], context.program_id);
 
         //? Taking Sol:
         let amount_float = (amount as f64) / 1_000 as f64;
@@ -57,7 +73,7 @@ pub mod tut2 {
         };
 
         token::transfer(
-            CpiContext::new_with_signer(token_program, cpi_accounts, &[&[b"seed", &[bump]]]),
+            CpiContext::new_with_signer(token_program, cpi_accounts, &[&[b"_seed", &[bump]]]),
             amount,
         )
         .unwrap();
@@ -65,35 +81,6 @@ pub mod tut2 {
         Ok(())
     }
 
-    // pub fn claim_from_pda(context: Context<ClaimFromPda>) -> Result<()> {
-    //     let pda = context.accounts.pda.to_account_info();
-    //     let receiver = context.accounts.receiver.to_account_info();
-    //     let system_program = context.accounts.system_program.to_account_info();
-    //     let lamp = pda.lamports();
-
-    //     let right_sol_receiver = context.accounts.pda.owner;
-
-    //     if receiver.key() != right_sol_receiver{
-    //         msg!("Unknown Sol Reciever");
-    //         return Ok(());
-    //     }
-
-    //     let (_, bump) = Pubkey::find_program_address(&[b"seed"], &context.program_id);
-
-    //     // let cpi_accounts = anchor_lang::system_program::Transfer {
-    //     let cpi_accounts = SolanaTransfer {
-    //         from: pda,
-    //         to: receiver,
-    //     };
-
-    //     anchor_lang::system_program::transfer(
-    //         CpiContext::new_with_signer(system_program, cpi_accounts, &[&[b"seed", &[bump]]]),
-    //         // lamp,
-    //         1000,
-    //     )?;
-
-    //     Ok(())
-    // }
 }
 
 #[derive(Accounts)]
@@ -101,7 +88,7 @@ pub struct ABuyToken<'info> {
     ///CHECK:
     #[account(
         mut,
-        seeds = [b"seed"],
+        seeds = [b"_seed"],
         bump,
     )]
     pub pda: Account<'info, PdaInfo>,
@@ -134,23 +121,6 @@ pub struct ABuyToken<'info> {
     pub system_program: Program<'info, System>,
 }
 
-// #[derive(Accounts)]
-// pub struct ClaimFromPda<'info> {
-//     ///CHECK:
-//     #[account(
-//         mut,
-//         seeds = [b"seed"],
-//         bump,
-//     )]
-//     pda: Account<'info, PdaInfo>,
-
-//     ///CHECK:
-//     #[account(mut)]
-//     receiver: AccountInfo<'info>,
-
-//     system_program: Program<'info, System>,
-// }
-
 #[derive(Accounts)]
 pub struct InitPda<'info> {
     #[account(mut)]
@@ -158,7 +128,7 @@ pub struct InitPda<'info> {
 
     #[account(
         init,
-        seeds=[b"seed"],
+        seeds=[b"_seed"],
         bump,
         payer= owner,
         space = 8 + std::mem::size_of::<PdaInfo>(), 
@@ -167,7 +137,24 @@ pub struct InitPda<'info> {
     system_program: Program<'info, System>
 }
 
+#[derive(Accounts)]
+pub struct UpdatePda<'info>{
+    #[account(
+        address = pda.owner
+    )]
+    pub owner: Signer<'info>,
+    
+    #[account(
+        mut,
+        seeds=[b"_seed"],
+        bump,
+    )]
+    pub pda: Account<'info, PdaInfo>,
+}
+
+
 #[account]
 pub struct PdaInfo{
     owner: Pubkey,
+    sol_receiver: Pubkey,
 }

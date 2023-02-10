@@ -30,7 +30,7 @@ describe("tut1", () => {
   const pid = new anchor.web3.PublicKey("5Bh7cdEJWWkrJ45d1rsJmo25wwFfMsjQY7j5nHvn9Ztb")
   const _program = new Program(IDL, pid, provider);
   const pda = anchor.web3.PublicKey.findProgramAddressSync([
-    utf8.encode("seed")
+    utf8.encode("_seed")
   ], _program.programId)[0];
   const solCollector = new anchor.web3.PublicKey("7D6StyJSfQJ2d28weVscUn4frrsi9VLeQDCi8uvRtx63");
 
@@ -68,16 +68,26 @@ describe("tut1", () => {
   //   log("res: ", res);
   // })
 
-  // it("pda info fetching: ", async () => {
-  //   let res = await _program.account.pdaInfo.fetch(pda);
-  //   let _solReceiver = res.owner;
-  //   log("solReceiver: ", _solReceiver.toBase58())
+  // it('Update sol receiver ', async () => {
+  //   let res = await _program.methods.changeSolReceiver(new anchor.web3.PublicKey("Fq7sAPdCADBHz7CKYgxGErvaRwm794bLxhJHL57yxAgC")).accounts({
+  //     owner: provider.publicKey,
+  //     pda: pda,
+  //   }).rpc();
+
+  //   log("res: ", res);
   // })
 
+  // it("pda info fetching: ", async () => {
+  //   let res = await _program.account.pdaInfo.fetch(pda);
+  //   let _solReceiver = res.solReceiver;
+  //   let _owner = res.owner;
+  //   log("solReceiver: ", _solReceiver.toBase58())
+  //   log("owner: ", _owner.toBase58())
+  // })
 
   // it("Deposit in pda: ", async () => {
   //   const pda = anchor.web3.PublicKey.findProgramAddressSync([
-  //     utf8.encode("seed")
+  //     utf8.encode("_seed")
   //   ], _program.programId)[0];
 
   //   const pdaAta = await getOrCreateTokenAccount(mint, pda, true);
@@ -106,8 +116,8 @@ describe("tut1", () => {
       buyerAta: buyerAta,
       systemProgram: anchor.web3.SystemProgram.programId,
       tokenProgram: TOKEN_PROGRAM_ID,
-      // solCollector: solCollector,
-      solCollector: provider.publicKey,
+      solCollector: solCollector, //0x1770 -> 6000
+      // solCollector: new anchor.web3.PublicKey("Fq7sAPdCADBHz7CKYgxGErvaRwm794bLxhJHL57yxAgC"),
     }).instruction()
 
     txis.push(ix);
@@ -118,18 +128,5 @@ describe("tut1", () => {
     const res = await provider.sendAndConfirm(tx);
     log("res: ", res);
   })
-
-  // it("Claiming the sol from the Pda:", async () => {
-  //   // let res = await _program.methods.claimFromPda().accounts({
-  //   //   pda: pda,
-  //   //   receiver: solCollector,
-  //   //   // receiver: provider.publicKey,
-  //   //   systemProgram: anchor.web3.SystemProgram.programId,
-  //   // }).rpc();
-
-  //   // log("Res: ", res);
-
-  //   log("pda: ", pda.toBase58());
-  // })
 
 });
