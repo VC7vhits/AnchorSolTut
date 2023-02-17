@@ -2,14 +2,14 @@
 seeds = false
 skip-lint = false
 [programs.devnet]
-tut2 = "5Bh7cdEJWWkrJ45d1rsJmo25wwFfMsjQY7j5nHvn9Ztb"
+tut2 = "AdAer5ihhyVQAgxZBTZpgLZG9kFBcFrJ9PEH42AtyFtT"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
 cluster = "devnet"
-wallet = "/home/ak/.config/solana/id_old.json"
+wallet = "/home/vc/.config/solana/id.json"
 
 [scripts]
 test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"

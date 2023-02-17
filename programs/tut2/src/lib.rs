@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::{self, Mint, Token, TokenAccount, Transfer};
-declare_id!("5Bh7cdEJWWkrJ45d1rsJmo25wwFfMsjQY7j5nHvn9Ztb");
+declare_id!("AdAer5ihhyVQAgxZBTZpgLZG9kFBcFrJ9PEH42AtyFtT");
 
 #[error_code]
 pub enum MyError{
@@ -28,9 +28,15 @@ pub mod tut2 {
         Ok(())
     }
     
+    pub fn set_price(context: Context<UpdatePda>, price: u64) -> Result<()>{
+        let pda = &mut context.accounts.pda;
+        pda.price = price as f64 / 1000_000_000f64;
+
+        Ok(())
+    }
     
     pub fn buy_token(context: Context<ABuyToken>, amount: u64) -> Result<()> {
-        let pda = context.accounts.pda.to_account_info();
+        let pda = &mut context.accounts.pda;
         let pda_ata = context.accounts.pda_ata.to_account_info();
         let buyer = context.accounts.buyer.to_account_info();
         let buyer_ata = context.accounts.buyer_ata.to_account_info();
@@ -38,7 +44,7 @@ pub mod tut2 {
         let sol_collector = context.accounts.sol_collector.to_account_info();
         let system_program = context.accounts.system_program.to_account_info();
 
-        if context.accounts.pda.sol_receiver != sol_collector.key(){
+        if pda.sol_receiver != sol_collector.key(){
             // msg!("MissMatch the sol Receiver");
             // return Ok(())
             return anchor_lang::err!(MyError::SRMM);
@@ -47,13 +53,14 @@ pub mod tut2 {
         let (_pda, bump) = Pubkey::find_program_address(&[b"_seed"], context.program_id);
 
         //? Taking Sol:
-        let amount_float = (amount as f64) / 1_000 as f64;
-        let sol_price = (1000_000_000 as f64 * amount_float) as u64 / 1000;
+        let amount_float = (amount as f64) / 10_000 as f64;
+        let sol_price = (1000_000_000 as f64 * amount_float) * pda.price;
+        pda.sold_amount += amount;
 
         let ix = anchor_lang::solana_program::system_instruction::transfer(
             &buyer.key(),
             &sol_collector.key(),
-            sol_price,
+            sol_price as u64,
         );
 
         anchor_lang::solana_program::program::invoke(
@@ -69,7 +76,7 @@ pub mod tut2 {
         let cpi_accounts = Transfer {
             from: pda_ata,
             to: buyer_ata,
-            authority: pda,
+            authority: pda.to_account_info(),
         };
 
         token::transfer(
@@ -157,4 +164,6 @@ pub struct UpdatePda<'info>{
 pub struct PdaInfo{
     owner: Pubkey,
     sol_receiver: Pubkey,
+    price: f64,
+    sold_amount: u64,
 }

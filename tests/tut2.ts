@@ -20,14 +20,14 @@ describe("tut1", () => {
   const buyer = new anchor.web3.PublicKey(
     "8K4Zorrw9kBLMqVEmrABdsjWCSKrcrVvMdJ8CTtyCf2z"
   );
-  const mint = new anchor.web3.PublicKey("8BvrrBRZhEst73FbRZRdu1PvKjvL6zvGX3GPVQ3mnhoK")
+  const mint = new anchor.web3.PublicKey("CGdNrSHN7WEattbAmfRYiwZQCVkNezxPzj4T1gtbNyNc")
 
   const mainUser = provider.publicKey;
 
   // const program = anchor.workspace.Tut2 as Program<Tut2>;
   let txis = [];
 
-  const pid = new anchor.web3.PublicKey("5Bh7cdEJWWkrJ45d1rsJmo25wwFfMsjQY7j5nHvn9Ztb")
+  const pid = new anchor.web3.PublicKey("AdAer5ihhyVQAgxZBTZpgLZG9kFBcFrJ9PEH42AtyFtT")
   const _program = new Program(IDL, pid, provider);
   const pda = anchor.web3.PublicKey.findProgramAddressSync([
     utf8.encode("_seed")
@@ -77,14 +77,6 @@ describe("tut1", () => {
   //   log("res: ", res);
   // })
 
-  // it("pda info fetching: ", async () => {
-  //   let res = await _program.account.pdaInfo.fetch(pda);
-  //   let _solReceiver = res.solReceiver;
-  //   let _owner = res.owner;
-  //   log("solReceiver: ", _solReceiver.toBase58())
-  //   log("owner: ", _owner.toBase58())
-  // })
-
   // it("Deposit in pda: ", async () => {
   //   const pda = anchor.web3.PublicKey.findProgramAddressSync([
   //     utf8.encode("_seed")
@@ -102,31 +94,58 @@ describe("tut1", () => {
   //   await sendTransaction();
   // })
 
-  it("byer from pda Account: ", async () => {
-    const pdaAta = await getOrCreateTokenAccount(mint, pda, true);
-    const buyerAta = await getOrCreateTokenAccount(mint, provider.publicKey);
+  // it("set price ", async () => {
+  //   const price = Math.trunc(0.003 * 1000_000_000);
+  //   let res = await _program.methods.setPrice(new anchor.BN(price)).accounts({
+  //     owner: provider.publicKey,
+  //     pda: pda,
+  //   }).rpc()
 
-    log("pdaAta: ", pdaAta.toBase58())
+  //   log("res: ", res);
+  // })
 
-    let ix = await _program.methods.buyToken(new anchor.BN(3 * 1_000)).accounts({
-      mint: mint,
-      pda: pda,
-      pdaAta: pdaAta,
-      buyer: provider.publicKey,
-      buyerAta: buyerAta,
-      systemProgram: anchor.web3.SystemProgram.programId,
-      tokenProgram: TOKEN_PROGRAM_ID,
-      solCollector: solCollector, //0x1770 -> 6000
-      // solCollector: new anchor.web3.PublicKey("Fq7sAPdCADBHz7CKYgxGErvaRwm794bLxhJHL57yxAgC"),
-    }).instruction()
+  it("pda info fetching: ", async () => {
+    let res = await _program.account.pdaInfo.fetch(pda);
+    let _solReceiver = res.solReceiver;
+    let _owner = res.owner;
+    let _soldAmount = res.soldAmount.toNumber();
+    let _price = res.price;
 
-    txis.push(ix);
+    let obj = {
+      solReceiver: _solReceiver.toBase58(),
+      owner: _owner.toBase58(),
+      soldAmount: _soldAmount / 10_000,
+      price: _price,
+    }
 
-    const tx = new anchor.web3.Transaction();
-    tx.add(...txis);
-
-    const res = await provider.sendAndConfirm(tx);
-    log("res: ", res);
+    log(obj);
   })
+
+  // it("buy from pda Account: ", async () => {
+  //   const pdaAta = await getOrCreateTokenAccount(mint, pda, true);
+  //   const buyerAta = await getOrCreateTokenAccount(mint, provider.publicKey);
+
+  //   log("pdaAta: ", pdaAta.toBase58())
+
+  //   let ix = await _program.methods.buyToken(new anchor.BN(3 * 10_000)).accounts({
+  //     mint: mint,
+  //     pda: pda,
+  //     pdaAta: pdaAta,
+  //     buyer: provider.publicKey,
+  //     buyerAta: buyerAta,
+  //     systemProgram: anchor.web3.SystemProgram.programId,
+  //     tokenProgram: TOKEN_PROGRAM_ID,
+  //     solCollector: solCollector, //0x1770 -> 6000
+  //     // solCollector: new anchor.web3.PublicKey("Fq7sAPdCADBHz7CKYgxGErvaRwm794bLxhJHL57yxAgC"),
+  //   }).instruction()
+
+  //   txis.push(ix);
+
+  //   const tx = new anchor.web3.Transaction();
+  //   tx.add(...txis);
+
+  //   const res = await provider.sendAndConfirm(tx);
+  //   log("res: ", res);
+  // })
 
 });
