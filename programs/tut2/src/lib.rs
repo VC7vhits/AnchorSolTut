@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("Fg6PaFpoGXkYsidMpWTK6W2BeZ7FEfcYkg476zPFsLnS");
+declare_id!("3MGnQXb5wnxnxXLThkaN5Ri3CpZq4PmTQQZujS1VUisU");
 
 // union Res{
 //     pass(value),

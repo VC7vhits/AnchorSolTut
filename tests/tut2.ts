@@ -2,6 +2,7 @@ import * as anchor from "@project-serum/anchor";
 import { Program } from "@project-serum/anchor";
 import { Tut2 } from "../target/types/tut2";
 import { readFileSync } from 'fs';
+import { } from '@project-serum/anchor'
 
 
 const log = console.log;
@@ -18,7 +19,6 @@ describe("tut2", () => {
   let account = anchor.web3.Keypair.fromSecretKey(buffers_8);
 
   const program = anchor.workspace.Tut2 as Program<Tut2>;
-  const receiver = new anchor.web3.PublicKey("4MMr4CMFuyBmpbK3RvwdxaipMvkUY4Y25pKYgtEuMYjG");
 
   it("init account", async () => {
     let sign = program.methods.initialize().accounts({
